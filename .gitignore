@@ -1,0 +1,22 @@
+# Secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Python
+backend/venv/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+frontend/node_modules/
+dist/
+dist-ssr/
+
+# Local DBs and logs
+*.db
+*.log
