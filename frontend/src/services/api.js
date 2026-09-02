@@ -208,6 +208,44 @@ export async function recommendBusinesses(anonymousId, interests) {
 }
 
 /**
+ * Generate AI-powered business ideas based on child's interests.
+ * @param {string} anonymousId
+ * @param {string[]} interests - array of interest IDs
+ * @returns {Promise<object>} - { ideas: [...], message: string }
+ */
+export async function generateAIIdeas(anonymousId, interests) {
+  const res = await fetch(`${API_BASE}/grow/ai-ideas`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ anonymous_id: anonymousId, interests }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'AI idea generation failed.');
+  }
+  return res.json();
+}
+
+/**
+ * Start a business simulation with an AI-generated business idea.
+ * @param {string} anonymousId
+ * @param {object} businessIdea - the full business idea object from generateAIIdeas
+ * @returns {Promise<object>}
+ */
+export async function startAIBusiness(anonymousId, businessIdea) {
+  const res = await fetch(`${API_BASE}/grow/ai-business`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ anonymous_id: anonymousId, business_idea: businessIdea }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'AI business simulation failed.');
+  }
+  return res.json();
+}
+
+/**
  * Run an investment simulation.
  * @param {string} anonymousId
  * @param {number} amount

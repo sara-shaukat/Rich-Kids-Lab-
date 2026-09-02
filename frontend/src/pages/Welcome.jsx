@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createSession } from '../services/api';
+import { createSession, getSession } from '../services/api';
 import Mascot from '../components/Mascot';
 
 const STORAGE_KEY = 'rkl_child_id';
@@ -32,6 +32,19 @@ export default function Welcome() {
 
     setLoading(true);
     try {
+      // Check if a valid session already exists before creating a new one
+      const existingId = localStorage.getItem(STORAGE_KEY);
+      if (existingId) {
+        const existing = await getSession(existingId);
+        if (existing) {
+          // Valid session found — redirect to dashboard without creating new session
+          navigate('/dashboard');
+          return;
+        }
+        // Invalid/expired session — clear it
+        localStorage.removeItem(STORAGE_KEY);
+      }
+      // No valid session — create new one
       const session = await createSession(value);
       localStorage.setItem(STORAGE_KEY, session.anonymous_id);
       navigate('/dashboard');

@@ -340,6 +340,87 @@ def start_business(db: Session, child: Child, template_id: str) -> dict:
     }
 
 
+def start_ai_business(db: Session, child: Child, business_idea: dict) -> dict:
+    """Start a business simulation with an AI-generated business idea.
+
+    Uses the same simulation logic as start_business but accepts a custom
+    business idea dict instead of a template_id.
+
+    business_idea dict must contain:
+    - id: unique identifier
+    - name: business name
+    - cost: startup cost
+    - expected_profit_min, expected_profit_max: profit range
+    - skills: list of skills
+    - description: description text
+    """
+    required = {"id", "name", "cost", "expected_profit_min", "expected_profit_max", "skills", "description"}
+    if not required.issubset(business_idea.keys()):
+        raise HTTPException(status_code=400, detail="Invalid business idea format.")
+
+    cost = Decimal(str(business_idea["cost"]))
+    p_min = Decimal(str(business_idea["expected_profit_min"]))
+    p_max = Decimal(str(business_idea["expected_profit_max"]))
+
+    wallet: Wallet = child.wallet
+    if cost > wallet.balance:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Aapke paas sirf Rs. {wallet.balance} hain. Rs. {cost} chahiye is business ke liye.",
+        )
+
+    # Randomize actual profit within the expected range
+    actual_profit = Decimal(str(random.randint(int(p_min), int(p_max))))
+    actual_revenue = cost + actual_profit
+
+    # Deduct cost, add revenue
+    wallet.balance -= cost
+    wallet.balance += actual_revenue
+
+    # Record GROW transaction
+    txn = Transaction(
+        child_id=child.id,
+        type="GROW",
+        amount=actual_profit,
+        description=f"Business: {business_idea['name']}",
+    )
+    db.add(txn)
+
+    # Record GROW activity
+    details = {
+        "idea": business_idea["name"],
+        "budget": business_idea.get("min_budget", business_idea["cost"]),
+        "cost": business_idea["cost"],
+        "expected_profit_min": business_idea["expected_profit_min"],
+        "expected_profit_max": business_idea["expected_profit_max"],
+        "actual_revenue": int(actual_revenue),
+        "actual_profit": int(actual_profit),
+        "skills": business_idea["skills"],
+        "ai_generated": True,
+    }
+    activity = GrowActivity(
+        child_id=child.id,
+        type="BUSINESS",
+        details=json.dumps(details),
+    )
+    db.add(activity)
+
+    db.commit()
+    db.refresh(wallet)
+
+    return {
+        "wallet_balance": wallet.balance,
+        "idea": business_idea["name"],
+        "cost": cost,
+        "actual_revenue": actual_revenue,
+        "actual_profit": actual_profit,
+        "expected_profit_min": p_min,
+        "expected_profit_max": p_max,
+        "skills": business_idea["skills"],
+        "description": business_idea["description"],
+    }
+
+
 def invest(db: Session, child: Child, invest_amount, risk_level: str) -> dict:
     """Run an investment simulation.
 

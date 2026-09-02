@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getDashboard, getGrowTemplates, startBusiness, invest, exploreSkill, recommendBusinesses } from '../services/api';
+import { getDashboard, getGrowTemplates, startBusiness, invest, exploreSkill, generateAIIdeas, startAIBusiness } from '../services/api';
 
 const STORAGE_KEY = 'rkl_child_id';
 
@@ -67,13 +67,25 @@ export default function Grow() {
     );
   };
 
-  // ---- Business: get recommendations ----
+  // ---- Business: get AI-generated ideas ----
   const handleGetRecommendations = async () => {
     setBusinessLoading(true);
     setError('');
     try {
-      const result = await recommendBusinesses(childId, selectedInterests);
-      setRecommendResult(result);
+      const result = await generateAIIdeas(childId, selectedInterests);
+      if (result.ideas && result.ideas.length > 0) {
+        // Transform AI ideas to match the expected format
+        const aiBusinesses = result.ideas.map(idea => ({
+          ...idea,
+          ai_generated: true,
+          affordable: true, // AI already filters by budget
+          match_score: 1, // All AI ideas are "recommended"
+        }));
+        setRecommendResult({ business: aiBusinesses, message: result.message });
+      } else {
+        // Fallback to standard templates if AI fails
+        setRecommendResult({ business: [], message: result.message || 'AI ideas available nahi hain. Standard templates try karein!' });
+      }
       setBusinessStep('businesses');
     } catch (err) {
       setError(err.message);
@@ -83,12 +95,20 @@ export default function Grow() {
   };
 
   // ---- Business: start simulation ----
-  const handleBusiness = async (templateId) => {
+  const handleBusiness = async (business) => {
     setBusinessLoading(true);
     setError('');
     try {
-      const result = await startBusiness(childId, templateId);
-      setBusinessResult(result);
+      // Check if this is an AI-generated idea or standard template
+      if (business.ai_generated || business.description.includes('AI-generated')) {
+        // AI-generated business
+        const result = await startAIBusiness(childId, business);
+        setBusinessResult(result);
+      } else {
+        // Standard template
+        const result = await startBusiness(childId, business.id);
+        setBusinessResult(result);
+      }
       setBusinessStep('result');
       await refreshDashboard();
     } catch (err) {
@@ -238,7 +258,7 @@ export default function Grow() {
                     <button
                       key={t.id}
                       className={`business-card ${!t.affordable ? 'disabled-option' : ''} ${t.match_score > 0 ? 'recommended' : ''}`}
-                      onClick={() => t.affordable && handleBusiness(t.id)}
+                      onClick={() => t.affordable && handleBusiness(t)}
                       disabled={!t.affordable || businessLoading}
                     >
                       {t.match_score > 0 && <span className="business-badge">✨ Recommended</span>}

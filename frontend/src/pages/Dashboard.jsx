@@ -226,6 +226,12 @@ export default function Dashboard() {
         </div>
       </div>
 
+      <button className="paisa-map-entry" onClick={() => navigate('/map')}>
+        <span className="paisa-map-entry-kicker">Paisa Duniya</span>
+        <span className="paisa-map-entry-title">Open the money map</span>
+        <span className="paisa-map-entry-hint">Abhi: Lock-In Peak · beat it to reach Gatekeep</span>
+      </button>
+
       {/* Action Buttons */}
       <div className="action-grid action-grid-v2">
         <button className="action-btn save-btn" onClick={() => navigate('/save')}>

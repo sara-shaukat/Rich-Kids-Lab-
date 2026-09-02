@@ -3199,3 +3199,418 @@ button.quest-slot:hover {
   padding: 0.5rem 0.7rem;
   font-weight: 600;
 }
+
+/* ---- Paisa Duniya map (UI slice, no backend) ---- */
+.paisa-map-entry {
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 1rem 1.1rem;
+  border: none;
+  border-radius: 16px;
+  background: #1c2e24;
+  color: #f4efe4;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.paisa-map-entry:hover {
+  background: #24382d;
+}
+
+.paisa-map-entry-kicker {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #c4a35a;
+  font-weight: 700;
+}
+
+.paisa-map-entry-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.paisa-map-entry-hint {
+  font-size: 0.85rem;
+  color: #c5d0c8;
+}
+
+.paisa-map {
+  min-height: 100vh;
+  padding: 1.25rem 1rem 10rem;
+  color: #f4efe4;
+  background: #1a2a22;
+}
+
+.paisa-map.theme-roofline {
+  background: #0c1018;
+  color: #f2f0ea;
+}
+
+.paisa-map-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.paisa-map-brand h1 {
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+.paisa-map-kicker {
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c4a35a;
+  font-weight: 700;
+}
+
+.theme-roofline .paisa-map-kicker {
+  color: #e0a45a;
+}
+
+.paisa-rank-plate {
+  margin-left: auto;
+  background: #24362c;
+  padding: 0.55rem 0.8rem;
+  border-radius: 12px;
+  min-width: 11rem;
+}
+
+.theme-roofline .paisa-rank-plate {
+  background: #161d2c;
+}
+
+.paisa-rank-label {
+  display: block;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9aaea3;
+}
+
+.paisa-rank-plate strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.paisa-rank-place {
+  font-size: 0.8rem;
+  color: #c4a35a;
+}
+
+.paisa-theme-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.paisa-theme-chip {
+  flex: 1;
+  background: #24362c;
+  color: #f4efe4;
+  border: 1px solid #3d5648;
+  border-radius: 12px;
+  padding: 0.55rem 0.7rem;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
+
+.theme-roofline .paisa-theme-chip {
+  background: #161d2c;
+  border-color: #2a3548;
+}
+
+.paisa-theme-chip.on {
+  border-color: #c4a35a;
+  color: #c4a35a;
+}
+
+.paisa-theme-unlock {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #9aaea3;
+}
+
+.paisa-spine {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.paisa-chunk {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 0.7rem;
+  align-items: stretch;
+}
+
+.paisa-chunk-rail {
+  display: flex;
+  justify-content: center;
+  padding-top: 1.1rem;
+}
+
+.paisa-chunk-body {
+  background: #24362c;
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  border: 1px solid #355043;
+}
+
+.theme-roofline .paisa-chunk-body {
+  background: #141b28;
+  border-color: #2c3a52;
+}
+
+.paisa-chunk-fog .paisa-chunk-body {
+  background: #1e2a24;
+  opacity: 0.55;
+}
+
+.theme-roofline .paisa-chunk-fog .paisa-chunk-body {
+  background: #10151e;
+}
+
+.paisa-chunk-torch .paisa-chunk-body {
+  border-color: #c4a35a;
+}
+
+.paisa-chunk-rank {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9aaea3;
+  font-weight: 700;
+}
+
+.paisa-chunk-body h2 {
+  font-size: 1.15rem;
+  margin: 0.15rem 0 0.3rem;
+}
+
+.paisa-chunk-blurb {
+  font-size: 0.88rem;
+  color: #c5d0c8;
+}
+
+.paisa-chunk-tag {
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #c4a35a;
+}
+
+.paisa-torch {
+  width: 12px;
+  height: 22px;
+  background: #c4a35a;
+  border-radius: 2px 2px 3px 3px;
+  position: relative;
+}
+
+.paisa-torch::after {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 1px;
+  width: 10px;
+  height: 10px;
+  background: #e8c56b;
+  border-radius: 2px;
+}
+
+.paisa-stamp {
+  width: 14px;
+  height: 14px;
+  background: #3d8f6e;
+  border-radius: 2px;
+}
+
+.paisa-gate {
+  width: 12px;
+  height: 16px;
+  border: 2px solid #c4a35a;
+  border-radius: 2px 2px 0 0;
+}
+
+.paisa-fog-dot {
+  width: 10px;
+  height: 10px;
+  background: #4a5c52;
+  border-radius: 2px;
+}
+
+.paisa-quest {
+  position: sticky;
+  bottom: 0;
+  max-width: 520px;
+  margin: 1.25rem auto 0;
+  background: #18241e;
+  border: 1px solid #c4a35a;
+  border-radius: 16px 16px 0 0;
+  padding: 1rem 1rem 1.2rem;
+}
+
+.theme-roofline .paisa-quest {
+  background: #101624;
+  border-color: #e0a45a;
+}
+
+.paisa-quest-kicker {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #c4a35a;
+  font-weight: 800;
+  margin-bottom: 0.35rem;
+}
+
+.paisa-quest-line {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.paisa-quest-meta,
+.paisa-quest-note {
+  font-size: 0.82rem;
+  color: #9aaea3;
+  margin: 0.4rem 0 0.7rem;
+}
+
+.paisa-tools {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.paisa-tool {
+  background: #24362c;
+  border: 1px solid #3d5648;
+  color: #f4efe4;
+  border-radius: 10px;
+  padding: 0.45rem 0.2rem;
+  font-weight: 800;
+  font-size: 0.72rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.paisa-tool:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.paisa-tool small {
+  font-weight: 600;
+  font-size: 0.62rem;
+  color: #9aaea3;
+}
+
+.paisa-tool-save { border-bottom: 3px solid #3d8f6e; }
+.paisa-tool-spend { border-bottom: 3px solid #c45c4a; }
+.paisa-tool-grow { border-bottom: 3px solid #c4a35a; }
+.paisa-tool-give { border-bottom: 3px solid #6b8cae; }
+
+.paisa-primary {
+  width: 100%;
+  border: none;
+  background: #c4a35a;
+  color: #1a2a22;
+  font-weight: 800;
+  font-size: 1rem;
+  padding: 0.85rem;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.paisa-primary:hover {
+  background: #d4b56a;
+}
+
+.paisa-complete {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 16, 12, 0.82);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 40;
+}
+
+.paisa-complete-card {
+  width: min(520px, 100%);
+  background: #1c2e24;
+  border: 1px solid #c4a35a;
+  border-radius: 18px;
+  padding: 1.25rem 1.15rem 1.4rem;
+}
+
+.theme-roofline .paisa-complete-card {
+  background: #121826;
+  border-color: #e0a45a;
+}
+
+.paisa-complete-kicker {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c4a35a;
+  font-weight: 800;
+}
+
+.paisa-complete-card h2 {
+  font-size: 1.35rem;
+  margin: 0.35rem 0 0.7rem;
+}
+
+.paisa-complete-rank,
+.paisa-complete-unlock {
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.paisa-next-quest {
+  margin: 0.85rem 0;
+  padding: 0.75rem;
+  background: #24362c;
+  border-radius: 12px;
+}
+
+.theme-roofline .paisa-next-quest {
+  background: #161d2c;
+}
+
+.paisa-tools-preview .paisa-tool {
+  cursor: default;
+}
+
+@media (max-width: 520px) {
+  .paisa-map-top {
+    flex-direction: column;
+  }
+  .paisa-rank-plate {
+    margin-left: 0;
+    width: 100%;
+  }
+}

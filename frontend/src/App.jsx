@@ -8,6 +8,7 @@ import Grow from './pages/Grow';
 import Give from './pages/Give';
 import Quests from './pages/Quests';
 import Mentor from './pages/Mentor';
+import PaisaMap from './pages/PaisaMap';
 import { getSession } from './services/api';
 
 const STORAGE_KEY = 'rkl_child_id';
@@ -54,6 +55,7 @@ function AppRouter() {
         <Route path="/grow" element={<Grow />} />
         <Route path="/give" element={<Give />} />
         <Route path="/quests" element={<Quests />} />
+        <Route path="/map" element={<PaisaMap />} />
         <Route path="/mentor" element={<Mentor />} />
         <Route path="*" element={<Navigate to={initialRoute} replace />} />
       </Routes>

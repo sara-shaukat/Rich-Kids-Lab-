@@ -1,12 +1,11 @@
-"""AI Provider — mock implementation for hackathon.
+"""AI Provider — business recommendations with Groq integration.
 
 Generates personalized business recommendations based on a child's interests.
-Can be replaced with a real AI provider (Groq, etc.) later.
-
-The mock provider uses template-based Roman Urdu pitches that combine the
-child's interests with the business template's skill tags.
+Uses Groq API when available, falls back to mock templates.
 """
 
+import json
+import os
 import random
 
 # Interest options the child can pick from (child-friendly categories)
@@ -114,16 +113,33 @@ def score_template(child_interests: list[str], template_id: str) -> int:
     return score
 
 
-def rank_templates(child_interests: list[str], templates: list[dict]) -> list[dict]:
+def rank_templates(child_interests: list[str], templates: list[dict], child_context: dict = None) -> list[dict]:
     """Rank business templates by interest match and add personalized pitches.
+
+    Uses Groq AI when available, falls back to mock templates.
+
+    Args:
+        child_interests: List of interest IDs the child selected
+        templates: List of business template dicts
+        child_context: Optional dict with child's balance, previous businesses, etc.
 
     Returns the same templates with added 'pitch' and 'match_score' fields,
     sorted by match score (best matches first).
     """
+    # Try Groq AI first
+    ai_pitches = None
+    groq_key = os.environ.get("GROQ_API_KEY")
+    if groq_key and child_context:
+        ai_pitches = _generate_ai_pitches(child_interests, templates, child_context, groq_key)
+
     scored = []
     for t in templates:
         score = score_template(child_interests, t["id"])
-        pitch = generate_pitch(child_interests, t["id"], t["name"])
+        # Use AI pitch if available, otherwise fall back to mock
+        if ai_pitches and t["id"] in ai_pitches:
+            pitch = ai_pitches[t["id"]]
+        else:
+            pitch = generate_pitch(child_interests, t["id"], t["name"])
         scored.append({
             **t,
             "match_score": score,
@@ -133,3 +149,210 @@ def rank_templates(child_interests: list[str], templates: list[dict]) -> list[di
     # Sort by match_score descending, then by name for stability
     scored.sort(key=lambda x: (-x["match_score"], x["name"]))
     return scored
+
+
+def generate_ai_business_ideas(
+    child_interests: list[str],
+    balance: float,
+    groq_key: str,
+) -> list[dict]:
+    """Generate completely new AI-powered business ideas.
+
+    Args:
+        child_interests: List of interest IDs the child selected
+        balance: Child's current wallet balance
+        groq_key: Groq API key
+
+    Returns list of business idea dicts, or empty list on failure.
+    """
+    try:
+        import httpx
+
+        # Build interest labels
+        interest_labels = []
+        for interest_id in child_interests:
+            for opt in INTEREST_OPTIONS:
+                if opt["id"] == interest_id:
+                    interest_labels.append(opt["label"])
+                    break
+
+        prompt = f"""You are Paisa Bot, a creative business idea generator for Pakistani children aged 9-13.
+The child is interested in: {', '.join(interest_labels) if interest_labels else 'general entrepreneurship'}.
+Their current budget is Rs. {balance}.
+
+Generate 4 UNIQUE, CREATIVE micro-business ideas that:
+1. Are age-appropriate and safe for children
+2. Can be started with Rs. 50 to Rs. {min(int(balance * 0.6), 500)} budget
+3. Relate to the child's interests when possible
+4. Teach real financial concepts (cost, revenue, profit, skills)
+5. Are NOT the standard lemonade stand or bookmarks (be creative!)
+
+For each business idea, provide:
+- id: unique snake_case identifier (e.g., "custom_sticker_pack")
+- name: catchy, kid-friendly name in English or Roman Urdu (2-4 words)
+- description: 1-2 sentence description in Roman Urdu explaining what the business does
+- cost: startup cost in Rs. (integer, within budget)
+- expected_profit_min: minimum expected profit in Rs. (integer)
+- expected_profit_max: maximum expected profit in Rs. (integer, about 2x min)
+- skills: list of 2-3 skills the child will learn (e.g., ["creativity", "marketing", "planning"])
+- pitch: 1 sentence personalized pitch in Roman Urdu mentioning the child's interests
+
+Respond in EXACTLY this JSON format (no markdown, no code blocks):
+[
+  {{
+    "id": "business_id_1",
+    "name": "Business Name",
+    "description": "Description in Roman Urdu",
+    "cost": 150,
+    "expected_profit_min": 180,
+    "expected_profit_max": 360,
+    "skills": ["skill1", "skill2"],
+    "pitch": "Personalized pitch text"
+  }}
+]
+"""
+
+        with httpx.Client(timeout=15) as client:
+            resp = client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {groq_key}"},
+                json={
+                    "model": "groq/compound",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "max_tokens": 1500,
+                    "temperature": 0.9,
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            content = data["choices"][0]["message"]["content"]
+
+        # Parse JSON response
+        ideas = json.loads(content)
+        if not isinstance(ideas, list):
+            return []
+
+        # Validate and filter
+        valid_ideas = []
+        for idea in ideas:
+            if not isinstance(idea, dict):
+                continue
+            required = {"id", "name", "description", "cost", "expected_profit_min", "expected_profit_max", "skills", "pitch"}
+            if not required.issubset(idea.keys()):
+                continue
+            # Validate types
+            if not isinstance(idea["id"], str) or not isinstance(idea["name"], str):
+                continue
+            if not isinstance(idea["cost"], (int, float)) or idea["cost"] <= 0:
+                continue
+            if not isinstance(idea["expected_profit_min"], (int, float)):
+                continue
+            if not isinstance(idea["expected_profit_max"], (int, float)):
+                continue
+            if not isinstance(idea["skills"], list) or len(idea["skills"]) == 0:
+                continue
+            # Ensure cost is within budget
+            if idea["cost"] > balance:
+                continue
+            valid_ideas.append({
+                "id": idea["id"],
+                "name": idea["name"],
+                "description": idea["description"],
+                "cost": int(idea["cost"]),
+                "expected_profit_min": int(idea["expected_profit_min"]),
+                "expected_profit_max": int(idea["expected_profit_max"]),
+                "skills": idea["skills"],
+                "pitch": idea["pitch"],
+                "min_budget": int(idea["cost"]),
+            })
+
+        return valid_ideas
+
+    except Exception:
+        # Any failure → return empty list
+        return []
+
+
+def _generate_ai_pitches(
+    child_interests: list[str],
+    templates: list[dict],
+    child_context: dict,
+    groq_key: str,
+) -> dict[str, str]:
+    """Generate personalized pitches using Groq AI.
+
+    Returns a dict mapping template_id → pitch text.
+    Falls back to empty dict on any failure.
+    """
+    try:
+        import httpx
+
+        # Build interest labels
+        interest_labels = []
+        for interest_id in child_interests:
+            for opt in INTEREST_OPTIONS:
+                if opt["id"] == interest_id:
+                    interest_labels.append(opt["label"])
+                    break
+
+        # Build business summaries
+        business_summaries = []
+        for t in templates:
+            business_summaries.append({
+                "id": t["id"],
+                "name": t["name"],
+                "cost": t["cost"],
+                "expected_profit_min": t["expected_profit_min"],
+                "expected_profit_max": t["expected_profit_max"],
+                "skills": t["skills"],
+            })
+
+        prompt = f"""You are Paisa Bot, a friendly financial mentor for Pakistani children aged 9-13.
+The child is interested in: {', '.join(interest_labels) if interest_labels else 'general business ideas'}.
+Their current balance is Rs. {child_context.get('balance', 0)}.
+
+Generate a SHORT, encouraging pitch (1-2 sentences max) in Roman Urdu for each business below.
+Make each pitch personalized to the child's interests and budget.
+Use simple language and familiar English terms (profit, investment, skills) where natural.
+
+Businesses:
+{json.dumps(business_summaries, indent=2)}
+
+Respond in EXACTLY this JSON format (no markdown, no code blocks):
+{{
+  "business_id_1": "Pitch text here",
+  "business_id_2": "Pitch text here"
+}}
+"""
+
+        with httpx.Client(timeout=10) as client:
+            resp = client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {groq_key}"},
+                json={
+                    "model": "groq/compound",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "max_tokens": 500,
+                    "temperature": 0.8,
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            content = data["choices"][0]["message"]["content"]
+
+        # Parse JSON response
+        pitches = json.loads(content)
+        if not isinstance(pitches, dict):
+            return {}
+
+        # Validate and filter
+        valid_pitches = {}
+        for template in templates:
+            if template["id"] in pitches and isinstance(pitches[template["id"]], str):
+                valid_pitches[template["id"]] = pitches[template["id"]]
+
+        return valid_pitches
+
+    except Exception:
+        # Any failure (network, parsing, API error) → fall back to mock
+        return {}

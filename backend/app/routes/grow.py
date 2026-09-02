@@ -16,12 +16,14 @@ from app.services.grow_service import (
     INVESTMENT_SCENARIOS,
     get_templates_for_budget,
     start_business,
+    start_ai_business,
     invest,
     explore_skill,
 )
 from app.services.ai_provider import (
     INTEREST_OPTIONS,
     rank_templates,
+    generate_ai_business_ideas,
 )
 
 router = APIRouter(prefix="/api/grow", tags=["grow"])
@@ -93,6 +95,32 @@ class RecommendResponse(BaseModel):
 class BusinessRequest(BaseModel):
     anonymous_id: str
     template_id: str = Field(..., min_length=1)
+
+
+class AIBusinessRequest(BaseModel):
+    anonymous_id: str
+    business_idea: dict
+
+
+class AIBusinessIdeaResponse(BaseModel):
+    id: str
+    name: str
+    description: str
+    cost: int
+    expected_profit_min: int
+    expected_profit_max: int
+    skills: list[str]
+    pitch: str
+
+
+class GenerateAIIdeasRequest(BaseModel):
+    anonymous_id: str
+    interests: list[str]
+
+
+class GenerateAIIdeasResponse(BaseModel):
+    ideas: list[AIBusinessIdeaResponse]
+    message: str
 
 
 class BusinessResultResponse(BaseModel):
@@ -225,8 +253,17 @@ def recommend_businesses(request: RecommendRequest, db: Session = Depends(get_db
 
     templates = get_templates_for_budget(balance)
 
+    # Build child context for AI pitches
+    child_context = {
+        "balance": float(balance),
+        "previous_businesses": [
+            a.details for a in child.grow_activities
+            if a.type == "BUSINESS"
+        ],
+    }
+
     # Rank and add personalized pitches
-    ranked = rank_templates(request.interests, templates)
+    ranked = rank_templates(request.interests, templates, child_context)
 
     business_list = [
         RankedBusinessResponse(
@@ -273,6 +310,65 @@ def business_route(request: BusinessRequest, db: Session = Depends(get_db)):
     """Start a business simulation."""
     child = get_child_by_anonymous_id(db, request.anonymous_id)
     result = start_business(db, child, request.template_id)
+
+    return BusinessResultResponse(
+        **result,
+        message=f"Mubarak ho! Aapne '{result['idea']}' business shuru kiya aur Rs. {result['actual_profit']} kamaye!",
+        disclaimer="Ye ek simulation hai. Real business mein results alag ho sakte hain.",
+    )
+
+
+@router.post("/ai-ideas", response_model=GenerateAIIdeasResponse)
+def generate_ai_ideas(request: GenerateAIIdeasRequest, db: Session = Depends(get_db)):
+    """Generate AI-powered business ideas based on child's interests."""
+    import os
+    child = get_child_by_anonymous_id(db, request.anonymous_id)
+    balance = float(child.wallet.balance)
+    groq_key = os.environ.get("GROQ_API_KEY")
+
+    if not groq_key:
+        return GenerateAIIdeasResponse(
+            ideas=[],
+            message="AI business generator is currently offline. Please try the standard business templates instead.",
+        )
+
+    ideas = generate_ai_business_ideas(request.interests, balance, groq_key)
+
+    if not ideas:
+        return GenerateAIIdeasResponse(
+            ideas=[],
+            message="AI ideas generate nahi ho paye. Standard templates try karein!",
+        )
+
+    # Build interest labels for message
+    interest_labels = []
+    for interest_id in request.interests:
+        for opt in INTEREST_OPTIONS:
+            if opt["id"] == interest_id:
+                interest_labels.append(opt["label"])
+                break
+
+    if interest_labels:
+        msg = f"Aapko {', '.join(interest_labels)} pasand hai! Ye unique AI-generated business ideas aapke liye hain:"
+    else:
+        msg = "Ye unique AI-generated business ideas aapke liye hain:"
+
+    # Save interests to child record
+    existing_interests = json.loads(child.interests) if child.interests else []
+    for interest in request.interests:
+        if interest not in existing_interests:
+            existing_interests.append(interest)
+    child.interests = json.dumps(existing_interests)
+    db.commit()
+
+    return GenerateAIIdeasResponse(ideas=ideas, message=msg)
+
+
+@router.post("/ai-business", response_model=BusinessResultResponse)
+def ai_business_route(request: AIBusinessRequest, db: Session = Depends(get_db)):
+    """Start a business simulation with an AI-generated business idea."""
+    child = get_child_by_anonymous_id(db, request.anonymous_id)
+    result = start_ai_business(db, child, request.business_idea)
 
     return BusinessResultResponse(
         **result,
