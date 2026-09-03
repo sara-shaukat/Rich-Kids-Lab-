@@ -54,8 +54,8 @@ export default function MoneyTerms() {
     <div className="money-terms">
       <button className="money-terms-toggle" onClick={() => setOpen(!open)}>
         <span className="money-terms-toggle-text">
-          📖 Paise ki Bhasha
-          <small> — yeh shabd kya kehte hain?</small>
+          📖 Paisay ki Zubaan
+          <small> — yeh lafz kya kehta hai?</small>
         </span>
         <span className="money-terms-arrow">{open ? '▲' : '▼'}</span>
       </button>

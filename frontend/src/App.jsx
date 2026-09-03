@@ -11,6 +11,8 @@ import Mentor from './pages/Mentor';
 import Vault from './pages/Vault';
 import VaultLevel from './pages/VaultLevel';
 import MoneyLab from './pages/MoneyLab';
+import Certificate from './pages/Certificate';
+import ReportCard from './pages/ReportCard';
 import { getSession } from './services/api';
 
 const STORAGE_KEY = 'rkl_child_id';
@@ -61,6 +63,8 @@ function AppRouter() {
         <Route path="/vault/:level" element={<VaultLevel />} />
         <Route path="/lab" element={<MoneyLab />} />
         <Route path="/mentor" element={<Mentor />} />
+        <Route path="/certificate/:anonymousId" element={<Certificate />} />
+        <Route path="/reportcard/:anonymousId" element={<ReportCard />} />
         <Route path="*" element={<Navigate to={initialRoute} replace />} />
       </Routes>
     </BrowserRouter>

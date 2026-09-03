@@ -461,3 +461,105 @@ def test_business_profit_randomized(db, child_500):
         profits.add(profit)
     # With 10 runs, we should see at least 2 different values
     assert len(profits) >= 2
+
+
+# ---------------------------------------------------------------------------
+# Phone Accessories (loss-making template)
+# ---------------------------------------------------------------------------
+
+def test_phone_accessories_template_exists():
+    """Phone Accessories should be in templates with negative expected_profit_min."""
+    ids = [t["id"] for t in BUSINESS_TEMPLATES]
+    assert "phone_accessories" in ids
+    template = next(t for t in BUSINESS_TEMPLATES if t["id"] == "phone_accessories")
+    assert template["expected_profit_min"] < 0
+    assert template["expected_profit_max"] > 0
+
+
+def test_phone_accessories_can_lose_money(db, child_500):
+    """Run phone accessories 50 times — at least one loss should occur."""
+    losses = 0
+    for _ in range(50):
+        child_500.wallet.balance = Decimal("500.00")
+        db.commit()
+        result = start_business(db, child_500, "phone_accessories")
+        if result["actual_profit"] < 0:
+            losses += 1
+    assert losses >= 1, "Phone Accessories should produce at least 1 loss in 50 runs"
+
+
+def test_lemonade_can_lose_money(db, child_500):
+    """Lemonade Stand should sometimes lose money (range: -50 to 310)."""
+    losses = 0
+    for _ in range(100):
+        child_500.wallet.balance = Decimal("500.00")
+        db.commit()
+        result = start_business(db, child_500, "lemonade")
+        if result["actual_profit"] < 0:
+            losses += 1
+    assert losses >= 1, "Lemonade Stand should produce at least 1 loss in 100 runs"
+
+
+def test_sticker_shop_can_lose_money(db, child_500):
+    """Sticker Shop should sometimes lose money (range: -80 to 400)."""
+    losses = 0
+    for _ in range(100):
+        child_500.wallet.balance = Decimal("500.00")
+        db.commit()
+        result = start_business(db, child_500, "sticker_shop")
+        if result["actual_profit"] < 0:
+            losses += 1
+    assert losses >= 1, "Sticker Shop should produce at least 1 loss in 100 runs"
+
+
+def test_homework_never_loses(db, child_500):
+    """Homework Helper should NEVER lose money (safe for kids)."""
+    for _ in range(50):
+        child_500.wallet.balance = Decimal("500.00")
+        db.commit()
+        result = start_business(db, child_500, "homework")
+        assert result["actual_profit"] >= 0, "Homework Helper should never lose money"
+
+
+def test_phone_accessories_has_explanation(db, child_500):
+    """Business result should include result_explanation."""
+    result = start_business(db, child_500, "phone_accessories")
+    assert "result_explanation" in result
+    assert len(result["result_explanation"]) > 10
+
+
+# ---------------------------------------------------------------------------
+# Business explanation generation
+# ---------------------------------------------------------------------------
+
+def test_business_explanation_loss(db, child_500):
+    """Explanation should mention 'loss' when profit is negative."""
+    from app.services.grow_service import _generate_business_explanation
+    template = next(t for t in BUSINESS_TEMPLATES if t["id"] == "phone_accessories")
+    explanation = _generate_business_explanation(template, Decimal("-50"), Decimal("250"))
+    assert "loss" in explanation.lower()
+    assert "risk" in explanation.lower()
+
+
+def test_business_explanation_small_profit(db, child_500):
+    """Explanation should mention 'small' or 'chhota' for low profit."""
+    from app.services.grow_service import _generate_business_explanation
+    template = next(t for t in BUSINESS_TEMPLATES if t["id"] == "phone_accessories")
+    explanation = _generate_business_explanation(template, Decimal("30"), Decimal("250"))
+    assert "chhota" in explanation.lower() or "small" in explanation.lower()
+
+
+def test_business_explanation_great_profit(db, child_500):
+    """Explanation should praise when profit is near the upper end."""
+    from app.services.grow_service import _generate_business_explanation
+    template = next(t for t in BUSINESS_TEMPLATES if t["id"] == "phone_accessories")
+    explanation = _generate_business_explanation(template, Decimal("380"), Decimal("250"))
+    assert "zabardast" in explanation.lower() or "smart" in explanation.lower()
+
+
+def test_business_explanation_normal_profit(db, child_500):
+    """Explanation should mention 'profit margin' for normal profit."""
+    from app.services.grow_service import _generate_business_explanation
+    template = next(t for t in BUSINESS_TEMPLATES if t["id"] == "phone_accessories")
+    explanation = _generate_business_explanation(template, Decimal("150"), Decimal("250"))
+    assert "profit margin" in explanation.lower() or "margin" in explanation.lower()

@@ -235,6 +235,8 @@ export default function VaultLevel() {
             </div>
             <p className="vl-unlock-msg">🔓 Challenge 2 is now unlocked.</p>
             <button className="vl-cta" onClick={() => navigate('/vault')}>Go to Vault Map →</button>
+            <button className="vl-cert-btn" onClick={() => navigate(`/certificate/${childId}`)}>📜 View Certificate</button>
+            <button className="vl-report-btn" onClick={() => navigate(`/reportcard/${childId}`)}>📊 Money Report Card</button>
           </div>
         </div>
       );
@@ -261,6 +263,8 @@ export default function VaultLevel() {
             </div>
             <p className="vl-unlock-msg">🔓 Challenge 2 is now unlocked.</p>
             <button className="vl-cta" onClick={() => navigate('/vault')}>Go to Vault Map →</button>
+            <button className="vl-cert-btn" onClick={() => navigate(`/certificate/${childId}`)}>📜 View Certificate</button>
+            <button className="vl-report-btn" onClick={() => navigate(`/reportcard/${childId}`)}>📊 Money Report Card</button>
           </div>
         </div>
       );

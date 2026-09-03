@@ -650,6 +650,89 @@ def complete_level1(db: Session, child: Child, reflection_answer: str) -> dict:
     }
 
 
+def get_certificate_data(db: Session, child: Child) -> dict:
+    """Build certificate data for Level 1 completion.
+
+    Returns child info, goal details, earned badges, transaction stats,
+    and completion timestamp for rendering a certificate.
+    """
+    progress = (
+        db.query(VaultProgress)
+        .filter(VaultProgress.child_id == child.id, VaultProgress.level == 1)
+        .first()
+    )
+
+    if not progress or progress.goal_reflection_done != 1:
+        raise HTTPException(
+            status_code=400,
+            detail="Level 1 abhi complete nahi hua!",
+        )
+
+    # Get the completed goal
+    goal = (
+        db.query(Goal)
+        .filter(Goal.child_id == child.id, Goal.status == "completed")
+        .order_by(Goal.created_at.desc())
+        .first()
+    )
+
+    goal_info = None
+    if goal:
+        goal_info = {
+            "name": goal.name,
+            "target_amount": float(goal.target_amount),
+            "saved_amount": float(goal.saved_amount),
+        }
+
+    # Earned badges
+    from app.services.badge_service import compute_badges
+    badges = compute_badges(db, child)
+    earned_badges = [
+        {"name": b["name"], "icon": b["icon"], "description": b.get("condition_desc", "")}
+        for b in badges if b["earned"]
+    ]
+
+    # Transaction stats
+    transactions = (
+        db.query(Transaction)
+        .filter(Transaction.child_id == child.id)
+        .all()
+    )
+    total_saved = sum(
+        float(t.amount) for t in transactions if t.type == "SAVE"
+    )
+    total_spent = sum(
+        float(t.amount) for t in transactions if t.type == "SPEND"
+    )
+    total_earned = sum(
+        float(t.amount) for t in transactions if t.type == "EARN"
+    )
+
+    # Businesses completed
+    businesses_count = (
+        db.query(GrowActivity)
+        .filter(GrowActivity.child_id == child.id, GrowActivity.type == "BUSINESS")
+        .count()
+    )
+
+    return {
+        "child_id": child.anonymous_id,
+        "child_name": child.anonymous_id,
+        "goal": goal_info,
+        "badges": earned_badges,
+        "completed_at": progress.completed_at.isoformat() if progress.completed_at else None,
+        "reflection": "",
+        "stats": {
+            "total_saved": total_saved,
+            "total_spent": total_spent,
+            "total_earned": total_earned,
+            "businesses_completed": businesses_count,
+            "transaction_count": len(transactions),
+        },
+        "wallet_balance": float(child.wallet.balance) if child.wallet else 0,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Vault Quest Engine (reusable for all levels)
 # ---------------------------------------------------------------------------

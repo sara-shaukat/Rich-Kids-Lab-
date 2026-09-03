@@ -229,15 +229,28 @@ export default function Grow() {
           {/* Step 3: Result */}
           {businessStep === 'result' && businessResult && (
             <div className="grow-result-card">
-              <div className="grow-result-icon">🚀</div>
+              <div className="grow-result-icon">
+                {parseFloat(businessResult.actual_profit) >= 0 ? '🚀' : '📉'}
+              </div>
               <h2 className="grow-result-title">{businessResult.message}</h2>
               <div className="business-sim-card">
                 <div className="sim-row"><span>Cost:</span><span className="sim-cost">Rs. {parseFloat(businessResult.cost)}</span></div>
                 <div className="sim-row"><span>Revenue:</span><span className="sim-revenue">Rs. {parseFloat(businessResult.actual_revenue)}</span></div>
-                <div className="sim-row"><span>Actual Profit:</span><span className="sim-profit">Rs. {parseFloat(businessResult.actual_profit)}</span></div>
+                <div className="sim-row">
+                  <span>Actual Profit:</span>
+                  <span className={parseFloat(businessResult.actual_profit) >= 0 ? 'sim-profit' : 'sim-loss'}>
+                    {parseFloat(businessResult.actual_profit) >= 0 ? '' : '-'}Rs. {Math.abs(parseFloat(businessResult.actual_profit))}
+                  </span>
+                </div>
                 <div className="sim-row"><span>Expected Range:</span><span>Rs. {parseFloat(businessResult.expected_profit_min)} – Rs. {parseFloat(businessResult.expected_profit_max)}</span></div>
                 <div className="sim-row"><span>Skills:</span><span>{businessResult.skills.join(', ')}</span></div>
               </div>
+              {businessResult.result_explanation && (
+                <div className="business-explanation">
+                  <span className="explanation-icon">💡</span>
+                  <p className="explanation-text">{businessResult.result_explanation}</p>
+                </div>
+              )}
               <MoneyTerms />
               <p className="grow-disclaimer">{businessResult.disclaimer}</p>
               <p className="grow-new-balance">Naya balance: <strong>Rs. {parseFloat(businessResult.wallet_balance).toLocaleString()}</strong></p>
@@ -259,15 +272,21 @@ export default function Grow() {
                   {recommendResult.business.map((t) => (
                     <button
                       key={t.id}
-                      className={`business-card ${!t.affordable ? 'disabled-option' : ''} ${t.match_score > 0 ? 'recommended' : ''}`}
+                      className={`business-card ${!t.affordable ? 'disabled-option' : ''} ${t.match_score > 0 ? 'recommended' : ''} ${t.expected_profit_min < 0 ? 'risky-business' : ''}`}
                       onClick={() => t.affordable && handleBusiness(t)}
                       disabled={!t.affordable || businessLoading}
                     >
                       {t.match_score > 0 && <span className="business-badge">✨ Recommended</span>}
+                      {t.expected_profit_min < 0 && <span className="risk-badge">⚡ Risky</span>}
                       <span className="business-name">{t.name}</span>
                       <span className="business-pitch">{t.pitch}</span>
                       <span className="business-cost">Cost: Rs. {t.cost}</span>
-                      <span className="business-profit">Expected Profit: ~Rs. {t.expected_profit_min}–{t.expected_profit_max}</span>
+                      <span className="business-profit">
+                        {t.expected_profit_min < 0
+                          ? `Profit: Rs. ${t.expected_profit_min} to +Rs. ${t.expected_profit_max}`
+                          : `Expected Profit: ~Rs. ${t.expected_profit_min}–${t.expected_profit_max}`
+                        }
+                      </span>
                       <span className="business-skills">{t.skills.join(', ')}</span>
                     </button>
                   ))}

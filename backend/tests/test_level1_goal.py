@@ -254,3 +254,56 @@ class TestBackwardCompatibility:
         progress = vault_service.get_or_create_progress(db, child, 1)
         status = vault_service.get_level_status(child, progress)
         assert status in ("available", "in_progress", "completed", "locked")
+
+
+# ── 9. Certificate data ──────────────────────────────────────────
+
+def _complete_level1_for_cert(db, child):
+    """Helper: create goal, save to target, complete Level 1."""
+    goal = create_goal(db, child, "New Bicycle", Decimal("500"))
+    save_to_goal(db, child, goal, Decimal("500"))
+    vault_service.complete_level1(db, child, "saving is important")
+    db.refresh(child)
+
+
+class TestCertificate:
+    def test_certificate_requires_completion(self, db, child):
+        """Certificate should fail if Level 1 is not complete."""
+        from fastapi import HTTPException
+        with pytest.raises(HTTPException) as exc_info:
+            vault_service.get_certificate_data(db, child)
+        assert exc_info.value.status_code == 400
+
+    def test_certificate_data_after_completion(self, db, child):
+        """Certificate should return goal, stats, and badges after completion."""
+        _complete_level1_for_cert(db, child)
+        cert = vault_service.get_certificate_data(db, child)
+
+        assert cert["child_id"] == "RKL-L1TEST"
+        assert cert["child_name"] == "RKL-L1TEST"
+        assert cert["goal"] is not None
+        assert cert["goal"]["name"] == "New Bicycle"
+        assert cert["goal"]["saved_amount"] == 500.0
+        assert cert["completed_at"] is not None
+        assert cert["reflection"] == ""
+        assert cert["stats"]["total_saved"] == 500.0
+        assert cert["stats"]["transaction_count"] >= 1
+        assert cert["wallet_balance"] >= 0
+
+    def test_certificate_includes_badges(self, db, child):
+        """Certificate should list any earned badges."""
+        _complete_level1_for_cert(db, child)
+        cert = vault_service.get_certificate_data(db, child)
+        # Badges is a list (may be empty or have items)
+        assert isinstance(cert["badges"], list)
+
+    def test_certificate_stats_breakdown(self, db, child):
+        """Certificate stats should include total_saved, total_spent, total_earned."""
+        _complete_level1_for_cert(db, child)
+        cert = vault_service.get_certificate_data(db, child)
+        stats = cert["stats"]
+        assert "total_saved" in stats
+        assert "total_spent" in stats
+        assert "total_earned" in stats
+        assert "businesses_completed" in stats
+        assert "transaction_count" in stats

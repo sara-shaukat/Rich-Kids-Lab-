@@ -554,6 +554,25 @@ class Level1CompleteResponse(BaseModel):
     already_completed: bool = False
 
 
+class CertificateResponse(BaseModel):
+    child_id: str
+    child_name: str
+    goal: dict | None = None
+    badges: list[dict] = []
+    completed_at: str | None = None
+    reflection: str = ""
+    stats: dict = {}
+    wallet_balance: float = 0
+
+
+class ReportCardResponse(BaseModel):
+    categories: list[dict] = []
+    overall_gpa: float = 0
+    stats: dict = {}
+    commentary: str = ""
+    ai_generated: bool = False
+
+
 @router.get("/goal/{anonymous_id}", response_model=Level1GoalStatusResponse)
 def get_level1_goal(anonymous_id: str, db: Session = Depends(get_db)):
     """Get the Level 1 goal status for the child."""
@@ -568,3 +587,28 @@ def complete_level1_goal(req: Level1CompleteRequest, db: Session = Depends(get_d
     child = get_child_by_anonymous_id(db, req.anonymous_id)
     result = vault_service.complete_level1(db, child, req.reflection_answer)
     return Level1CompleteResponse(**result)
+
+
+@router.get("/certificate/{anonymous_id}", response_model=CertificateResponse)
+def get_certificate(anonymous_id: str, db: Session = Depends(get_db)):
+    """Get the Level 1 completion certificate data."""
+    child = get_child_by_anonymous_id(db, anonymous_id)
+    result = vault_service.get_certificate_data(db, child)
+    return CertificateResponse(**result)
+
+
+@router.get("/reportcard/{anonymous_id}", response_model=ReportCardResponse)
+def get_report_card(anonymous_id: str, db: Session = Depends(get_db)):
+    """Get the AI Money Report Card for a child."""
+    from app.services.report_card_service import compute_report_card, generate_commentary
+    child = get_child_by_anonymous_id(db, anonymous_id)
+    card = compute_report_card(db, child)
+
+    # Generate AI commentary — one Groq call, template fallback
+    commentary = generate_commentary(card)
+    card["commentary"] = commentary
+    # Only mark as AI-generated if commentary differs from the default template
+    from app.services.report_card_service import _FALLBACK_COMMENTARY
+    card["ai_generated"] = commentary != _FALLBACK_COMMENTARY
+
+    return ReportCardResponse(**card)

@@ -22,7 +22,7 @@ INTEREST_OPTIONS = [
 INTEREST_BUSINESS_MAP = {
     "art": ["bookmarks", "art_cards", "sticker_shop"],
     "food": ["lemonade"],
-    "tech": ["sticker_shop"],
+    "tech": ["sticker_shop", "phone_accessories"],
     "teaching": ["homework"],
     "design": ["bookmarks", "art_cards", "sticker_shop"],
     "helping": ["homework", "lemonade"],
@@ -184,16 +184,22 @@ Generate 4 UNIQUE, CREATIVE micro-business ideas that:
 1. Are age-appropriate and safe for children
 2. Can be started with Rs. 50 to Rs. {min(int(balance * 0.6), 500)} budget
 3. Relate to the child's interests when possible
-4. Teach real financial concepts (cost, revenue, profit, skills)
+4. Teach real financial concepts (cost, revenue, profit, LOSS, skills)
 5. Are NOT the standard lemonade stand or bookmarks (be creative!)
+
+IMPORTANT — RISK EDUCATION:
+- At least 1 (ideally 2) of the 4 businesses MUST have a NEGATIVE expected_profit_min (e.g., -60 or -100).
+  This teaches children that businesses can LOSE money, which is a critical real-world lesson.
+- Risky businesses should have a higher expected_profit_max to compensate (risk vs reward).
+- Describe risky businesses honestly in the pitch: mention they are risky but potentially rewarding.
 
 For each business idea, provide:
 - id: unique snake_case identifier (e.g., "custom_sticker_pack")
 - name: catchy, kid-friendly name in English or Roman Urdu (2-4 words)
 - description: 1-2 sentence description in Roman Urdu explaining what the business does
 - cost: startup cost in Rs. (integer, within budget)
-- expected_profit_min: minimum expected profit in Rs. (integer)
-- expected_profit_max: maximum expected profit in Rs. (integer, about 2x min)
+- expected_profit_min: minimum expected profit in Rs. (NEGATIVE integer for risky businesses)
+- expected_profit_max: maximum expected profit in Rs. (integer, about 2-3x the absolute value of min for risky ones)
 - skills: list of 2-3 skills the child will learn (e.g., ["creativity", "marketing", "planning"])
 - pitch: 1 sentence personalized pitch in Roman Urdu mentioning the child's interests
 
@@ -204,8 +210,8 @@ Respond in EXACTLY this JSON format (no markdown, no code blocks):
     "name": "Business Name",
     "description": "Description in Roman Urdu",
     "cost": 150,
-    "expected_profit_min": 180,
-    "expected_profit_max": 360,
+    "expected_profit_min": -60,
+    "expected_profit_max": 300,
     "skills": ["skill1", "skill2"],
     "pitch": "Personalized pitch text"
   }}
@@ -265,6 +271,26 @@ Respond in EXACTLY this JSON format (no markdown, no code blocks):
                 "pitch": idea["pitch"],
                 "min_budget": int(idea["cost"]),
             })
+
+        # --- SERVER-SIDE RISK INJECTION ---
+        # If Groq gave us all-positive businesses, force risk on 1-2 of them.
+        # This ensures the child ALWAYS sees at least one risky option.
+        has_risky = any(i["expected_profit_min"] < 0 for i in valid_ideas)
+        if not has_risky and len(valid_ideas) >= 2:
+            import random
+            # Pick 1-2 random businesses to make risky
+            risky_count = min(2, len(valid_ideas))
+            risky_indices = random.sample(range(len(valid_ideas)), risky_count)
+            for idx in risky_indices:
+                cost = valid_ideas[idx]["cost"]
+                # Set loss range proportional to cost (20-60% of cost as max loss)
+                loss_amount = int(cost * random.uniform(0.2, 0.6))
+                valid_ideas[idx]["expected_profit_min"] = -loss_amount
+                # Ensure max is at least 2x the loss to make it interesting
+                valid_ideas[idx]["expected_profit_max"] = max(
+                    valid_ideas[idx]["expected_profit_max"],
+                    loss_amount * 3
+                )
 
         return valid_ideas
 

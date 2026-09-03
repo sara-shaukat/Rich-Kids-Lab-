@@ -135,6 +135,7 @@ class BusinessResultResponse(BaseModel):
     description: str
     message: str
     disclaimer: str
+    result_explanation: str = ""
 
 
 class InvestRequest(BaseModel):
@@ -311,9 +312,15 @@ def business_route(request: BusinessRequest, db: Session = Depends(get_db)):
     child = get_child_by_anonymous_id(db, request.anonymous_id)
     result = start_business(db, child, request.template_id)
 
+    profit = result["actual_profit"]
+    if profit >= 0:
+        msg = f"Aapne '{result['idea']}' business shuru kiya aur Rs. {profit} kamaye!"
+    else:
+        msg = f"Aapne '{result['idea']}' business shuru kiya lekin Rs. {abs(profit)} ka loss hua."
+
     return BusinessResultResponse(
         **result,
-        message=f"Mubarak ho! Aapne '{result['idea']}' business shuru kiya aur Rs. {result['actual_profit']} kamaye!",
+        message=msg,
         disclaimer="Ye ek simulation hai. Real business mein results alag ho sakte hain.",
     )
 
@@ -370,9 +377,15 @@ def ai_business_route(request: AIBusinessRequest, db: Session = Depends(get_db))
     child = get_child_by_anonymous_id(db, request.anonymous_id)
     result = start_ai_business(db, child, request.business_idea)
 
+    profit = result["actual_profit"]
+    if profit >= 0:
+        msg = f"Aapne '{result['idea']}' business shuru kiya aur Rs. {profit} kamaye!"
+    else:
+        msg = f"Aapne '{result['idea']}' business shuru kiya lekin Rs. {abs(profit)} ka loss hua."
+
     return BusinessResultResponse(
         **result,
-        message=f"Mubarak ho! Aapne '{result['idea']}' business shuru kiya aur Rs. {result['actual_profit']} kamaye!",
+        message=msg,
         disclaimer="Ye ek simulation hai. Real business mein results alag ho sakte hain.",
     )
 

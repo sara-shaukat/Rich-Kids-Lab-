@@ -35,10 +35,10 @@ BUSINESS_TEMPLATES = [
         "name": "Lemonade Stand",
         "min_budget": 150,
         "cost": 120,
-        "expected_profit_min": 150,
+        "expected_profit_min": -50,
         "expected_profit_max": 310,
         "skills": ["planning", "customer service"],
-        "description": "Thanda lemonade bechna ek classic business hai!",
+        "description": "Thanda lemonade bechna ek classic business hai — lekin mausam kharab ho toh?",
     },
     {
         "id": "homework",
@@ -55,20 +55,30 @@ BUSINESS_TEMPLATES = [
         "name": "Art Cards",
         "min_budget": 200,
         "cost": 150,
-        "expected_profit_min": 170,
+        "expected_profit_min": -40,
         "expected_profit_max": 330,
         "skills": ["art", "marketing"],
-        "description": "Apni art se greeting cards banao!",
+        "description": "Apni art se greeting cards banao — creativity chahiye!",
     },
     {
         "id": "sticker_shop",
         "name": "Sticker Shop",
         "min_budget": 250,
         "cost": 200,
-        "expected_profit_min": 200,
+        "expected_profit_min": -80,
         "expected_profit_max": 400,
         "skills": ["design", "selling"],
-        "description": "Cool stickers design karo aur becho!",
+        "description": "Cool stickers design karo aur becho — competition bhi hoti hai!",
+    },
+    {
+        "id": "phone_accessories",
+        "name": "Phone Accessories",
+        "min_budget": 300,
+        "cost": 250,
+        "expected_profit_min": -150,
+        "expected_profit_max": 400,
+        "skills": ["marketing", "risk management"],
+        "description": "Phone cases aur accessories becho — risky lekin rewarding ho sakta hai!",
     },
 ]
 
@@ -256,6 +266,45 @@ INVESTMENT_SCENARIOS = {
 }
 
 
+def _generate_business_explanation(template: dict, actual_profit: Decimal, cost: Decimal) -> str:
+    """Generate an educational explanation of WHY the business succeeded or failed."""
+    profit = int(actual_profit)
+    cost_int = int(cost)
+    p_min = template["expected_profit_min"]
+    p_max = template["expected_profit_max"]
+
+    if profit < 0:
+        return (
+            f"Is baar {template['name']} mein Rs. {abs(profit)} ka loss hua. "
+            f"Business mein aisa hota hai — kabhi demand kam hoti hai, kabhi costs zyada hoti hain. "
+            f"Asal zindagi mein bhi businesses fail hoti hain. "
+            f"Achi baat ye hai ke aap ne Rs. {cost_int} invest karke ek valuable lesson seekha: "
+            f"har business mein risk hota hai!"
+        )
+    elif profit < cost_int * 0.3:
+        return (
+            f"{template['name']} mein Rs. {profit} profit hua — chhota lekin positive! "
+            f"Business shuru hua aur cost recover ho gayi. "
+            f"Agar aap zyada customers dhundte ya pricing behtar karte to profit zyada ho sakta tha. "
+            f"Business mein growth time leti hai!"
+        )
+    elif profit >= p_max * 0.8:
+        return (
+            f"Zabardast! {template['name']} ne Rs. {profit} profit diya — "
+            f"expected range ke upper end ke qareeb! "
+            f"Aapki business strategy kaam kar gayi. "
+            f"Smart planning aur sahi product = strong results. "
+            f"Yehi soch aage bhi rakho!"
+        )
+    else:
+        return (
+            f"{template['name']} ne Rs. {profit} profit diya. "
+            f"Cost Rs. {cost_int} thi aur revenue Rs. {cost_int + profit} — "
+            f"matlab har Rs. 1 invest pe Rs. {(cost_int + profit) / cost_int:.1f} wapas aaye. "
+            f"Ye profit margin kehlata hai — business ki health ka measure!"
+        )
+
+
 def get_templates_for_budget(balance: Decimal) -> list[dict]:
     """Return business templates where min_budget <= balance."""
     return [t for t in BUSINESS_TEMPLATES if Decimal(str(t["min_budget"])) <= balance]
@@ -337,6 +386,7 @@ def start_business(db: Session, child: Child, template_id: str) -> dict:
         "expected_profit_max": p_max,
         "skills": template["skills"],
         "description": template["description"],
+        "result_explanation": _generate_business_explanation(template, actual_profit, cost),
     }
 
 
@@ -418,6 +468,7 @@ def start_ai_business(db: Session, child: Child, business_idea: dict) -> dict:
         "expected_profit_max": p_max,
         "skills": business_idea["skills"],
         "description": business_idea["description"],
+        "result_explanation": _generate_business_explanation(business_idea, actual_profit, cost),
     }
 
 

@@ -7,8 +7,8 @@ const STORAGE_KEY = 'rkl_child_id';
 
 const WELCOME_TIPS = [
   "Money follows brother Money follows! 🤖💰",
-  "Assalamu Alaikum! Paiso ki duniya mein aao!",
-  "Aaj kya seekhte hain? Paisa? Business? Investment?",
+  "Assalamu Alaikum! Paiso ki duniya mein welcome!",
+  "Aaj kya seekhna hai? Paisa? Business? Investment?",
   "Tayyar ho? Apni paiso ki kahani shuru karo!",
 ];
 

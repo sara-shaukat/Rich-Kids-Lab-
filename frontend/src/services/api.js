@@ -268,6 +268,34 @@ export async function completeLevel1(anonymousId, reflectionAnswer) {
 }
 
 /**
+ * Get Level 1 completion certificate data.
+ * @param {string} anonymousId
+ * @returns {Promise<object>} - certificate data
+ */
+export async function getCertificate(anonymousId) {
+  const res = await fetch(`${API_BASE}/vault/certificate/${anonymousId}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to load certificate.');
+  }
+  return res.json();
+}
+
+/**
+ * Get Money Report Card for a child.
+ * @param {string} anonymousId
+ * @returns {Promise<object>} - report card data with grades + commentary
+ */
+export async function getReportCard(anonymousId) {
+  const res = await fetch(`${API_BASE}/vault/reportcard/${anonymousId}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to load report card.');
+  }
+  return res.json();
+}
+
+/**
  * Start a Money Lab experiment — grants Rs. 500 virtual money.
  * @param {string} anonymousId
  * @returns {Promise<object>} - { activity_id, balance, grant, businesses, investment_options, pricing_options }
