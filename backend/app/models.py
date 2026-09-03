@@ -15,12 +15,14 @@ class Child(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     anonymous_id = Column(Text, unique=True, nullable=False)
     interests = Column(Text, nullable=True)  # JSON array string
+    vault_level = Column(Integer, nullable=False, default=0)  # 0=L1 only, N=highest unlocked
     created_at = Column(DateTime, server_default=func.now())
 
     wallet = relationship("Wallet", back_populates="child", uselist=False)
     transactions = relationship("Transaction", back_populates="child")
     goals = relationship("Goal", back_populates="child")
     grow_activities = relationship("GrowActivity", back_populates="child")
+    vault_progress = relationship("VaultProgress", back_populates="child")
 
 
 class Wallet(Base):
@@ -66,8 +68,24 @@ class GrowActivity(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     child_id = Column(Integer, ForeignKey("children.id"), nullable=False)
-    type = Column(Text, nullable=False)  # BUSINESS | INVESTMENT | SKILL
+    type = Column(Text, nullable=False)  # BUSINESS | INVESTMENT | SKILL | QUEST | VAULT_QUEST
     details = Column(Text, nullable=True)  # JSON object string
     created_at = Column(DateTime, server_default=func.now())
 
     child = relationship("Child", back_populates="grow_activities")
+
+
+class VaultProgress(Base):
+    __tablename__ = "vault_progress"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    child_id = Column(Integer, ForeignKey("children.id"), nullable=False)
+    level = Column(Integer, nullable=False)  # 1-8
+    quests_done = Column(Text, default="[]")  # JSON array of quest IDs
+    challenge_passed = Column(Integer, default=0)  # 0=not passed, 1=passed
+    best_challenge_score = Column(Integer, default=0)
+    goal_reflection_done = Column(Integer, default=0)  # 1 = goal reflection submitted
+    completed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    child = relationship("Child", back_populates="vault_progress")

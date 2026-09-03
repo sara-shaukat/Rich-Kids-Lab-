@@ -81,7 +81,7 @@ export default function Give() {
   const balance = parseFloat(dashboard.balance);
 
   return (
-    <div className="page-container give-page">
+    <div className="page-container page-give">
       {/* Header */}
       <div className="page-header">
         <button className="back-btn" onClick={() => navigate('/dashboard')}>← Wapas</button>

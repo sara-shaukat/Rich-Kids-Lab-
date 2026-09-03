@@ -10,6 +10,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showTrackRecord, setShowTrackRecord] = useState(false);
   const [toast, setToast] = useState(null);
+  const [coinsFell, setCoinsFell] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,6 +20,8 @@ export default function Dashboard() {
       if (!result) { localStorage.removeItem(STORAGE_KEY); navigate('/'); return; }
       setData(result);
       setLoading(false);
+      // One-time coin fall on first load
+      setTimeout(() => setCoinsFell(true), 300);
     });
   }, [navigate]);
 
@@ -57,7 +60,7 @@ export default function Dashboard() {
         mode={data.mascot_mode || 'hype'}
         onClick={() => {
           const tips = [
-            "Paisa follows my brother, paisa follows!",
+            "Money follows my brother, money follows!",
             "Champion log soch ke kharch karte hain!",
             "Aaj kuch naya seekhte hain!",
             "Bina goal ke archer? Target set karo!",
@@ -69,14 +72,22 @@ export default function Dashboard() {
 
       {/* Header */}
       <div className="dashboard-header">
-        <h1 className="dashboard-title">Rich Kids Lab</h1>
+        <h1 className="dashboard-title funky-title">💸 Rich Kids Lab 🧪</h1>
         <span className="child-id">ID: {data.anonymous_id}</span>
       </div>
 
       {/* Balance Card */}
-      <div className="balance-card balance-v2">
+      <div className={`balance-card balance-v2${coinsFell ? ' coins-fell' : ''}`}>
         <div className="balance-coin">💰</div>
-        <p className="balance-label">Aapka Balance</p>
+        {coinsFell && (
+          <div className="coin-rain">
+            <span className="falling-coin" style={{ left: '20%', animationDelay: '0s' }}>🪙</span>
+            <span className="falling-coin" style={{ left: '45%', animationDelay: '0.15s' }}>🪙</span>
+            <span className="falling-coin" style={{ left: '70%', animationDelay: '0.3s' }}>🪙</span>
+            <span className="falling-coin" style={{ left: '35%', animationDelay: '0.45s' }}>🪙</span>
+            <span className="falling-coin" style={{ left: '60%', animationDelay: '0.1s' }}>🪙</span>
+          </div>
+        )}
         <p className="balance-amount">Rs. {balance.toLocaleString()}</p>
         <p className="net-worth-line">Net Worth: <strong>Rs. {netWorth.toLocaleString()}</strong></p>
       </div>
@@ -126,34 +137,49 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* My Money Empire — Assets vs Liabilities */}
-      {(assets.length > 0 || liabilities.length > 0) && (
-        <div className="empire-section">
-          <h3 className="section-title">🏰 My Money Empire</h3>
-          <div className="empire-grid">
-            <div className="empire-col empire-assets">
-              <h4>✅ Assets</h4>
-              {assets.length === 0 && <p className="empire-empty">Koi asset nahi abhi</p>}
-              {assets.map((a, i) => (
-                <div key={i} className="empire-item empire-item-asset">
-                  <span>{a.name}</span>
-                  <span className="empire-amount">{a.label}</span>
-                </div>
-              ))}
-            </div>
-            <div className="empire-col empire-liabilities">
-              <h4>📉 Liabilities</h4>
-              {liabilities.length === 0 && <p className="empire-empty">Koi liability nahi — smart!</p>}
-              {liabilities.map((l, i) => (
-                <div key={i} className="empire-item empire-item-liability">
-                  <span>{l.name}</span>
-                  <span className="empire-amount">{l.label}</span>
-                </div>
-              ))}
-            </div>
+      {/* My Money Empire — Money Flow + Assets/Liabilities (always visible) */}
+      <div className="empire-section">
+        <h3 className="section-title">🏰 My Money Empire</h3>
+
+        {/* Money In / Money Out */}
+        <div className="money-flow">
+          <div className="money-flow-item money-in">
+            <span className="money-flow-icon">📥</span>
+            <span className="money-flow-label">Money In</span>
+            <span className="money-flow-amount">Rs. {(totalSaved + totalGrown).toLocaleString()}</span>
+          </div>
+          <div className="money-flow-divider" />
+          <div className="money-flow-item money-out">
+            <span className="money-flow-icon">📤</span>
+            <span className="money-flow-label">Money Out</span>
+            <span className="money-flow-amount">Rs. {totalSpent.toLocaleString()}</span>
           </div>
         </div>
-      )}
+
+        {/* Assets / Liabilities — always visible with names */}
+        <div className="empire-grid">
+          <div className="empire-col empire-assets">
+            <h4>✅ Assets <small>(paisa LAYA)</small></h4>
+            {assets.length === 0 && <p className="empire-empty">Grow karo — pehla asset yahan aayega!</p>}
+            {assets.map((a, i) => (
+              <div key={i} className="empire-item empire-item-asset">
+                <span>{a.name}</span>
+                <span className="empire-amount">{a.label}</span>
+              </div>
+            ))}
+          </div>
+          <div className="empire-col empire-liabilities">
+            <h4>📉 Liabilities <small>(paisa LE GAYA)</small></h4>
+            {liabilities.length === 0 && <p className="empire-empty">Koi liability nahi — smart!</p>}
+            {liabilities.map((l, i) => (
+              <div key={i} className="empire-item empire-item-liability">
+                <span>{l.name}</span>
+                <span className="empire-amount">{l.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Business Track Record */}
       {(businessHistory.length > 0 || investmentHistory.length > 0) && (
@@ -226,12 +252,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <button className="paisa-map-entry" onClick={() => navigate('/map')}>
-        <span className="paisa-map-entry-kicker">Paisa Duniya</span>
-        <span className="paisa-map-entry-title">Open the money map</span>
-        <span className="paisa-map-entry-hint">Abhi: Lock-In Peak · beat it to reach Gatekeep</span>
-      </button>
-
       {/* Action Buttons */}
       <div className="action-grid action-grid-v2">
         <button className="action-btn save-btn" onClick={() => navigate('/save')}>
@@ -256,14 +276,34 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* Quests entry */}
-      <button className="mentor-btn" onClick={() => navigate('/quests')}>
-        🗺️ Aaj ke Quests — mushkil faisla!
+      {/* Quests & AI Mentor — always visible */}
+      <div className="quest-mentor-strip">
+        <button className="quest-strip-btn" onClick={() => navigate('/quests')}>
+          <span className="quest-strip-icon">🗺️</span>
+          <div className="quest-strip-text">
+            <span className="quest-strip-title">Aaj ke Quests</span>
+            <span className="quest-strip-hint">Mushkil faisla — challenge lo!</span>
+          </div>
+        </button>
+        <button className="mentor-strip-btn" onClick={() => navigate('/mentor')}>
+          <span className="mentor-strip-icon">🤖</span>
+          <div className="mentor-strip-text">
+            <span className="mentor-strip-title">AI Mentor</span>
+            <span className="mentor-strip-hint">Se baat karein — seekho!</span>
+          </div>
+        </button>
+      </div>
+
+      <button className="paisa-map-entry" onClick={() => navigate('/vault')}>
+        <span className="paisa-map-entry-kicker">Money Vault</span>
+        <span className="paisa-map-entry-title">Open the Money Vault</span>
+        <span className="paisa-map-entry-hint">8 levels ka financial adventure!</span>
       </button>
 
-      {/* AI Mentor */}
-      <button className="mentor-btn" onClick={() => navigate('/mentor')}>
-        🤖 AI Mentor se baat karein
+      <button className="lab-map-entry" onClick={() => navigate('/lab')}>
+        <span className="lab-map-entry-icon">🧪</span>
+        <span className="lab-map-entry-title">Money Lab</span>
+        <span className="lab-map-entry-hint">7 din ka business experiment!</span>
       </button>
     </div>
   );

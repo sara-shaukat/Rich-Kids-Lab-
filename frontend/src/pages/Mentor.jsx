@@ -12,6 +12,7 @@ const QUICK_CHIPS = [
   'Mera goal kaise complete karun?',
   'Investment kya hoti hai?',
   'Paisay kaise bachaun?',
+  'Assets kya hotay hain?',
 ];
 
 export default function Mentor() {
@@ -186,7 +187,7 @@ export default function Mentor() {
           value={listening ? (transcript || 'bolo... main sun raha hoon') : input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') sendMessage(input); }}
-          placeholder="Paisa Bot se kuch poochho..."
+          placeholder="Money Buddy se kuch poochho..."
           disabled={loading || listening}
           maxLength={500}
         />

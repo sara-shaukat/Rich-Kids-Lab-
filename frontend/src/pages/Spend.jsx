@@ -70,7 +70,7 @@ export default function Spend() {
   const balance = parseFloat(dashboard.balance);
 
   return (
-    <div className="page-container">
+    <div className="page-container page-spend">
       {/* Header */}
       <div className="page-header">
         <button className="back-btn" onClick={() => navigate('/dashboard')}>

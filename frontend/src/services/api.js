@@ -57,6 +57,329 @@ export async function healthCheck() {
   return res.ok;
 }
 
+// ---- Money Vault ----
+
+/**
+ * Get the Money Vault map state (all 8 levels with lock/unlock status).
+ * @param {string} anonymousId
+ * @returns {Promise<object>} - { anonymous_id, vault_level, levels: [...] }
+ */
+export async function getVaultMap(anonymousId) {
+  const res = await fetch(`${API_BASE}/vault/map/${anonymousId}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Vault map failed to load.');
+  }
+  return res.json();
+}
+
+/**
+ * Get the status of a specific level.
+ * @param {string} anonymousId
+ * @param {number} level - Level number (1-8)
+ * @returns {Promise<object>} - { level, name, status, quests_done, challenge_passed, ... }
+ */
+export async function getVaultLevel(anonymousId, level) {
+  const res = await fetch(`${API_BASE}/vault/level/${anonymousId}/${level}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Level status failed to load.');
+  }
+  return res.json();
+}
+
+/**
+ * Mark a quest as done within a level.
+ * @param {string} anonymousId
+ * @param {number} level - Level number (1-8)
+ * @param {string} questId - Quest ID to mark as done
+ * @returns {Promise<object>} - { quests_done, level_complete }
+ */
+export async function completeVaultQuest(anonymousId, level, questId) {
+  const res = await fetch(`${API_BASE}/vault/level/${level}/quest/${questId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ anonymous_id: anonymousId }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Quest completion failed.');
+  }
+  return res.json();
+}
+
+/**
+ * Mark the level-end challenge as passed.
+ * @param {string} anonymousId
+ * @param {number} level - Level number (1-8)
+ * @param {number} score - Challenge score (default 100)
+ * @returns {Promise<object>} - { challenge_passed, level_complete, level_unlocked }
+ */
+export async function passVaultChallenge(anonymousId, level, score = 100) {
+  const res = await fetch(`${API_BASE}/vault/level/${level}/challenge`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ anonymous_id: anonymousId, score }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Challenge completion failed.');
+  }
+  return res.json();
+}
+
+/**
+ * Get all quests for a specific vault level.
+ * @param {string} anonymousId
+ * @param {number} level - Level number (1-8)
+ * @returns {Promise<object>} - { level, quests: [...] }
+ */
+export async function getVaultLevelQuests(anonymousId, level) {
+  const res = await fetch(`${API_BASE}/vault/quests/${anonymousId}/${level}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to load level quests.');
+  }
+  return res.json();
+}
+
+/**
+ * Resolve a vault quest choice (scenario → choice → consequence).
+ * @param {string} anonymousId
+ * @param {number} level - Level number (1-8)
+ * @param {string} questId - Quest ID
+ * @param {string} choiceId - Choice ID
+ * @returns {Promise<object>} - { quest_id, choice_id, headline, outcome_lines, ... }
+ */
+export async function resolveVaultQuest(anonymousId, level, questId, choiceId) {
+  const res = await fetch(`${API_BASE}/vault/quest/${level}/resolve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      anonymous_id: anonymousId, 
+      quest_id: questId,
+      choice_id: choiceId 
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Quest resolution failed.');
+  }
+  return res.json();
+}
+
+/**
+ * Submit a reflection answer for a vault quest.
+ * @param {string} anonymousId
+ * @param {string} questId - Quest ID
+ * @param {string} answerId - Reflection answer ID
+ * @returns {Promise<object>} - { bot_line }
+ */
+export async function submitVaultReflection(anonymousId, questId, answerId) {
+  const res = await fetch(`${API_BASE}/vault/quest/reflect`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      anonymous_id: anonymousId, 
+      quest_id: questId,
+      answer_id: answerId 
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Reflection submission failed.');
+  }
+  return res.json();
+}
+
+/**
+ * Get the level-end challenge questions.
+ * @param {string} anonymousId
+ * @param {number} level - Level number (1-8)
+ * @returns {Promise<object>} - { level, title, pass_threshold, questions: [...] }
+ */
+export async function getVaultChallenge(anonymousId, level) {
+  const res = await fetch(`${API_BASE}/vault/challenge/${anonymousId}/${level}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to load challenge.');
+  }
+  return res.json();
+}
+
+/**
+ * Submit answers for a level challenge.
+ * @param {string} anonymousId
+ * @param {number} level - Level number (1-8)
+ * @param {object} answers - { questionId: answerId }
+ * @returns {Promise<object>} - { passed, score, correct, total, results, level_complete, level_unlocked }
+ */
+export async function submitVaultChallenge(anonymousId, level, answers) {
+  const res = await fetch(`${API_BASE}/vault/challenge/${level}/submit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ anonymous_id: anonymousId, answers }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Challenge submission failed.');
+  }
+  return res.json();
+}
+
+// ---- Money Lab V2 — 7-Day Experiment ----
+
+// ---- Level 1 — First Goal ----
+
+/**
+ * Get the Level 1 goal status (goal info, progress, completion state).
+ * @param {string} anonymousId
+ * @returns {Promise<{has_goal: boolean, goal: object|null, level_complete: boolean, reflection_done: boolean}>}
+ */
+export async function getLevel1Goal(anonymousId) {
+  const res = await fetch(`${API_BASE}/vault/goal/${anonymousId}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to load Level 1 goal.');
+  }
+  return res.json();
+}
+
+/**
+ * Complete Level 1 after goal reflection.
+ * @param {string} anonymousId
+ * @param {string} reflectionAnswer
+ * @returns {Promise<{level_complete: boolean, level_unlocked: number|null, already_completed: boolean}>}
+ */
+export async function completeLevel1(anonymousId, reflectionAnswer) {
+  const res = await fetch(`${API_BASE}/vault/goal/complete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      anonymous_id: anonymousId,
+      reflection_answer: reflectionAnswer,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to complete Level 1.');
+  }
+  return res.json();
+}
+
+/**
+ * Start a Money Lab experiment — grants Rs. 500 virtual money.
+ * @param {string} anonymousId
+ * @returns {Promise<object>} - { activity_id, balance, grant, businesses, investment_options, pricing_options }
+ */
+export async function startMoneyLab(anonymousId) {
+  const res = await fetch(`${API_BASE}/vault/lab/start/${anonymousId}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to start experiment.');
+  }
+  return res.json();
+}
+
+/**
+ * Get current experiment state (for recovery / polling).
+ * @param {string} anonymousId
+ * @returns {Promise<object>} - { activity_id, state, business, wallet_balance }
+ */
+export async function getLabState(anonymousId) {
+  const res = await fetch(`${API_BASE}/vault/lab/state/${anonymousId}`);
+  if (!res.ok) return null;
+  return res.json();
+}
+
+/**
+ * Submit business/investment/pricing choices and simulate Day 1.
+ * @param {string} anonymousId
+ * @param {string} businessId
+ * @param {string} investment
+ * @param {string} pricing
+ * @returns {Promise<object>} - Day 1 result + state summary
+ */
+export async function setupMoneyLab(anonymousId, businessId, investment, pricing) {
+  const res = await fetch(`${API_BASE}/vault/lab/setup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      anonymous_id: anonymousId,
+      business_id: businessId,
+      investment,
+      pricing,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Setup failed.');
+  }
+  return res.json();
+}
+
+/**
+ * Advance to the next day — returns result, decision prompt, or final results.
+ * @param {string} anonymousId
+ * @returns {Promise<object>}
+ */
+export async function advanceMoneyLab(anonymousId) {
+  const res = await fetch(`${API_BASE}/vault/lab/advance`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ anonymous_id: anonymousId }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to advance.');
+  }
+  return res.json();
+}
+
+/**
+ * Apply a mid-game decision and advance to the next day.
+ * @param {string} anonymousId
+ * @param {string} decisionId
+ * @returns {Promise<object>}
+ */
+export async function decideMoneyLab(anonymousId, decisionId) {
+  const res = await fetch(`${API_BASE}/vault/lab/decide`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      anonymous_id: anonymousId,
+      decision_id: decisionId,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Decision failed.');
+  }
+  return res.json();
+}
+
+/**
+ * Submit reflection for a Money Lab experiment.
+ * @param {string} anonymousId
+ * @param {string} reflectionId
+ * @returns {Promise<object>} - { bot_line }
+ */
+export async function reflectMoneyLab(anonymousId, reflectionId) {
+  const res = await fetch(`${API_BASE}/vault/lab/reflect`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      anonymous_id: anonymousId,
+      reflection_id: reflectionId,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Reflection failed.');
+  }
+  return res.json();
+}
+
 // ---- Goals ----
 
 /**

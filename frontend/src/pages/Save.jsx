@@ -91,7 +91,7 @@ export default function Save() {
   const balance = parseFloat(dashboard.balance);
 
   return (
-    <div className="page-container">
+    <div className="page-container page-save">
       {/* Header */}
       <div className="page-header">
         <button className="back-btn" onClick={() => navigate('/dashboard')}>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDashboard, getGrowTemplates, startBusiness, invest, exploreSkill, generateAIIdeas, startAIBusiness } from '../services/api';
+import MoneyTerms from '../components/MoneyTerms';
 
 const STORAGE_KEY = 'rkl_child_id';
 
@@ -199,7 +200,7 @@ export default function Grow() {
   const balance = parseFloat(dashboard.balance);
 
   return (
-    <div className="page-container">
+    <div className="page-container page-grow">
       {/* Header */}
       <div className="page-header">
         <button className="back-btn" onClick={() => navigate('/dashboard')}>← Wapas</button>
@@ -237,6 +238,7 @@ export default function Grow() {
                 <div className="sim-row"><span>Expected Range:</span><span>Rs. {parseFloat(businessResult.expected_profit_min)} – Rs. {parseFloat(businessResult.expected_profit_max)}</span></div>
                 <div className="sim-row"><span>Skills:</span><span>{businessResult.skills.join(', ')}</span></div>
               </div>
+              <MoneyTerms />
               <p className="grow-disclaimer">{businessResult.disclaimer}</p>
               <p className="grow-new-balance">Naya balance: <strong>Rs. {parseFloat(businessResult.wallet_balance).toLocaleString()}</strong></p>
               <button className="secondary-btn" onClick={resetBusinessFlow} style={{ marginTop: '1rem' }}>
@@ -622,8 +624,8 @@ export default function Grow() {
           {/* Step 1: PICK */}
           {skillStep === 'pick' && (
             <>
-              <h2 className="section-title">🧪 SKILL LAB</h2>
-              <p className="section-hint">Kon si cheez tumhein sab se zyada pasand hai? Apni pasand choose karo 👀</p>
+              <h2 className="section-title">🧪 Skill Lab <span className="skill-subtitle">— Businesses You Can Try!</span></h2>
+              <p className="section-hint">Yeh real skills hain jin se asli business shuru kar sakte ho. Kaunsa try karoge? 👀</p>
               <div className="skill-grid">
                 {templates.skills.map((s) => (
                   <button key={s.id} className="skill-card" onClick={() => handleSkillSelect(s)}>

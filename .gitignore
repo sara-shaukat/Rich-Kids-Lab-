@@ -20,3 +20,8 @@ dist-ssr/
 # Local DBs and logs
 *.db
 *.log
+
+# Local browser verification screenshots
+e2e_*.png
+vault_*.png
+verify_v1_*.png

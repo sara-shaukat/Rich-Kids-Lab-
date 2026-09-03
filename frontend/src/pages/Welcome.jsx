@@ -6,7 +6,7 @@ import Mascot from '../components/Mascot';
 const STORAGE_KEY = 'rkl_child_id';
 
 const WELCOME_TIPS = [
-  "Paisa Bot aapka swagat karta hai! 🤖💰",
+  "Money follows brother Money follows! 🤖💰",
   "Assalamu Alaikum! Paiso ki duniya mein aao!",
   "Aaj kya seekhte hain? Paisa? Business? Investment?",
   "Tayyar ho? Apni paiso ki kahani shuru karo!",
@@ -96,7 +96,7 @@ export default function Welcome() {
           {error && <p className="error-text">{error}</p>}
 
           <button type="submit" className="start-btn start-btn-v2" disabled={loading}>
-            {loading ? 'Shuru ho raha hai...' : 'Shuru Karein! 🚀'}
+            {loading ? 'Starting...' : 'Shuru Karein! 🚀'}
           </button>
         </form>
 
