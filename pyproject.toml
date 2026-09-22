@@ -1,0 +1,20 @@
+[project]
+name = "rich-kids-lab"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "sqlalchemy",
+    "pydantic",
+    "python-dotenv",
+    "httpx",
+]
+
+# Vercel build: install + build the React frontend before deployment
+[tool.vercel.scripts]
+build = "cd frontend && npm ci && npm run build"
+
+# Serve the promoted frontend from the CDN (bypasses the function)
+[tool.vercel.fastapi.static]
+cdn = true
+exclude = true

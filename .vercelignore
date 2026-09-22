@@ -1,0 +1,14 @@
+.git
+backend/venv
+backend/.venv
+backend/.env
+.env
+backend/rich_kids_lab.db
+backend/__pycache__
+backend/.pytest_cache
+frontend/node_modules
+frontend/dist
+screenshots
+.vercel-tmp
+docker-compose.yml
+.env.local

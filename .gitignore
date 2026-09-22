@@ -25,3 +25,8 @@ dist-ssr/
 e2e_*.png
 vault_*.png
 verify_v1_*.png
+
+# Vercel
+.vercel/
+.vercel-tmp/
+

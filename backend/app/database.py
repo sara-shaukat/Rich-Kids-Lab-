@@ -2,9 +2,10 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
-# Database file lives next to the backend/ folder root
+# Database file lives next to the backend/ folder root.
+# Override with the DATABASE_URL env var (e.g. Docker: sqlite:////data/rich_kids_lab.db)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'rich_kids_lab.db')}"
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{os.path.join(BASE_DIR, 'rich_kids_lab.db')}")
 
 engine = create_engine(
     DATABASE_URL,
