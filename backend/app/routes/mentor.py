@@ -61,7 +61,8 @@ def ask_mentor(request: MentorRequest, db: Session = Depends(get_db)):
     provider = get_mentor_provider()
     result = provider.get_response(context, message, history)
 
-    provider_name = "groq" if provider.__class__.__name__ == "GroqProvider" else "mock"
+    # Truthful tag: reports whether Groq actually answered or the mock fallback did
+    provider_name = result.get("provider", "mock")
     return MentorResponse(
         response=result["response"],
         response_urdu=result["response_urdu"],

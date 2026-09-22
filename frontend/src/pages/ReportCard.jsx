@@ -15,8 +15,21 @@ export default function ReportCard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!anonymousId) return;
-    getReportCard(anonymousId)
+    // Self-heal: a stale link can land here with a bad id ("undefined").
+    // Recover the real session id from localStorage and fix the URL.
+    let id = anonymousId;
+    const isBad = !id || id === 'undefined' || id === 'null';
+    if (isBad) {
+      const stored = localStorage.getItem('rkl_child_id');
+      if (stored && stored !== 'undefined') {
+        navigate(`/reportcard/${stored}`, { replace: true });
+        return;
+      }
+      setError('Session not found. Please go back to the Dashboard.');
+      setLoading(false);
+      return;
+    }
+    getReportCard(id)
       .then(setData)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));

@@ -11,9 +11,12 @@ HTTP error, missing httpx package).
 """
 
 import json
+import logging
 import os
 
 from fastapi import HTTPException
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -111,6 +114,7 @@ class MockProvider(MentorProvider):
         return {
             "response": template["text"].format_map(fmt),
             "response_urdu": template["text_ur"].format_map(fmt),
+            "provider": "mock",
         }
 
 
@@ -279,11 +283,11 @@ _T_DEFAULT = {
 
 
 # ---------------------------------------------------------------------------
-# Groq provider — free tier (Llama 3.3 70B), falls back to Mock on ANY error
+# Groq provider — free tier (GPT-OSS 120B), falls back to Mock on ANY error
 # ---------------------------------------------------------------------------
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "groq/compound"
+GROQ_MODEL = "openai/gpt-oss-120b"
 
 SYSTEM_PROMPT = """You are Paisa Bot, a friendly financial mentor for Pakistani children aged 9-13.
 Respond in natural, simple Roman Urdu with familiar English financial terms (save, spend, invest, profit, loss, assets, liabilities) where natural.
@@ -310,8 +314,12 @@ class GroqProvider(MentorProvider):
         try:
             content = self._call_api(context, message, history)
             response, response_urdu = self._parse(content)
-            return {"response": response, "response_urdu": response_urdu}
-        except Exception:
+            return {"response": response, "response_urdu": response_urdu, "provider": "groq"}
+        except Exception as e:
+            logger.warning(
+                "Mentor Groq call failed (%s: %s) — falling back to mock",
+                type(e).__name__, e,
+            )
             return self._fallback.get_response(context, message, history)
 
     def _call_api(self, context: dict, message: str, history: list[dict]) -> str:
@@ -335,6 +343,9 @@ class GroqProvider(MentorProvider):
             "messages": messages,
             "max_tokens": 350,
             "temperature": 0.7,
+            # GPT-OSS is a reasoning model; keep reasoning minimal so short kid
+            # replies are not truncated by the token budget
+            "reasoning_effort": "low",
         }
         headers = {"Authorization": f"Bearer {api_key}"}
 

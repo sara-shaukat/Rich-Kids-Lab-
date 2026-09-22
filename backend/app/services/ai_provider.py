@@ -5,8 +5,11 @@ Uses Groq API when available, falls back to mock templates.
 """
 
 import json
+import logging
 import os
 import random
+
+logger = logging.getLogger(__name__)
 
 # Interest options the child can pick from (child-friendly categories)
 INTEREST_OPTIONS = [
@@ -223,10 +226,11 @@ Respond in EXACTLY this JSON format (no markdown, no code blocks):
                 "https://api.groq.com/openai/v1/chat/completions",
                 headers={"Authorization": f"Bearer {groq_key}"},
                 json={
-                    "model": "groq/compound",
+                    "model": "openai/gpt-oss-120b",
                     "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 1500,
                     "temperature": 0.9,
+                    "reasoning_effort": "low",
                 },
             )
             resp.raise_for_status()
@@ -294,8 +298,11 @@ Respond in EXACTLY this JSON format (no markdown, no code blocks):
 
         return valid_ideas
 
-    except Exception:
-        # Any failure → return empty list
+    except Exception as e:
+        logger.warning(
+            "AI business ideas Groq call failed (%s: %s) — returning empty list",
+            type(e).__name__, e,
+        )
         return []
 
 
@@ -356,10 +363,11 @@ Respond in EXACTLY this JSON format (no markdown, no code blocks):
                 "https://api.groq.com/openai/v1/chat/completions",
                 headers={"Authorization": f"Bearer {groq_key}"},
                 json={
-                    "model": "groq/compound",
+                    "model": "openai/gpt-oss-120b",
                     "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 500,
                     "temperature": 0.8,
+                    "reasoning_effort": "low",
                 },
             )
             resp.raise_for_status()
@@ -379,6 +387,9 @@ Respond in EXACTLY this JSON format (no markdown, no code blocks):
 
         return valid_pitches
 
-    except Exception:
-        # Any failure (network, parsing, API error) → fall back to mock
+    except Exception as e:
+        logger.warning(
+            "AI pitches Groq call failed (%s: %s) — falling back to mock",
+            type(e).__name__, e,
+        )
         return {}

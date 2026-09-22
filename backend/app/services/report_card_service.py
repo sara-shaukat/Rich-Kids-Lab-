@@ -5,10 +5,14 @@ Optionally uses ONE Groq API call for a personalized commentary paragraph.
 Template-based fallback ensures the demo works without any API credits.
 """
 
+import logging
+
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models import Child, Transaction, GrowActivity, Goal
+
+logger = logging.getLogger(__name__)
 
 
 _GRADE_MAP = [
@@ -245,13 +249,14 @@ def generate_commentary(report_data: dict) -> str:
         )
 
         payload = {
-            "model": "groq/compound",
+            "model": "openai/gpt-oss-120b",
             "messages": [
                 {"role": "system", "content": _REPORT_CARD_SYSTEM},
                 {"role": "user", "content": user_msg},
             ],
-            "max_tokens": 100,
+            "max_tokens": 200,
             "temperature": 0.7,
+            "reasoning_effort": "low",
         }
         headers = {"Authorization": f"Bearer {api_key}"}
 
@@ -269,5 +274,9 @@ def generate_commentary(report_data: dict) -> str:
         commentary = commentary.replace("###", "").replace("**", "").strip()
         return commentary if commentary else _FALLBACK_COMMENTARY
 
-    except Exception:
+    except Exception as e:
+        logger.warning(
+            "Report card commentary Groq call failed (%s: %s) — using template",
+            type(e).__name__, e,
+        )
         return _FALLBACK_COMMENTARY
